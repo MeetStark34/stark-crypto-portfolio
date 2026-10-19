@@ -1,0 +1,3 @@
+import { createClient } from "@/lib/supabase/server";
+import { SettingsView } from "./settings-view";
+export default async function SettingsPage(){const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return null;const {data}=await supabase.from("portfolio_settings").select("display_currency").eq("user_id",user.id).maybeSingle();const saved=data?.display_currency;const currency=typeof saved==="string"&&["EUR","USD","INR"].includes(saved)?saved:"EUR";const name=String(user.user_metadata?.display_name??user.user_metadata?.name??"@MeetStark");return <SettingsView email={user.email??""} displayName={name} currency={currency} createdAt={user.created_at}/>;}
