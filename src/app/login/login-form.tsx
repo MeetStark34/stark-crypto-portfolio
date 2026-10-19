@@ -1,41 +1,39 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { loginWithPassword } from "./actions";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setMessage("");
     try {
-      const supabase = createClient();
-      const requestedNext = new URL(window.location.href).searchParams.get("next");
-      const resolvedNext = new URL(requestedNext || "/dashboard", window.location.origin);
-      const next = resolvedNext.origin === window.location.origin
-        ? `${resolvedNext.pathname}${resolvedNext.search}${resolvedNext.hash}`
-        : "/dashboard";
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
-      });
-      if (error) throw error;
-      setMessage("Check your inbox for a secure sign-in link.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to send a sign-in link.");
+      const result = await loginWithPassword(password);
+      if (result.success) {
+        router.replace(result.redirectTo);
+        router.refresh();
+      } else {
+        setMessage(result.message);
+      }
+    } catch {
+      setMessage("Unable to sign in right now. Please try again.");
     } finally {
       setBusy(false);
     }
   }
 
-  return <form onSubmit={handleSubmit} className="mt-8">
-    <label htmlFor="email" className="mb-2 block text-xs text-white/55">Email address</label>
-    <input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25" placeholder="you@example.com" />
-    <button type="submit" disabled={busy} className="mt-4 h-12 w-full rounded-xl bg-[#d5e2d9] text-sm font-medium text-[#121714] transition-colors hover:bg-white disabled:cursor-wait disabled:opacity-60">{busy ? "Sending..." : "Email me a sign-in link"}</button>
-    {message && <p role="status" className="mt-4 text-sm leading-6 text-white/55">{message}</p>}
+  return <form onSubmit={handleSubmit} className="mt-9">
+    <label htmlFor="password" className="mb-2 block text-xs text-white/55">Password</label>
+    <input id="password" name="password" type="password" autoComplete="current-password" required maxLength={1024} value={password} onChange={(event) => setPassword(event.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c4d6cb]/60 focus:ring-2 focus:ring-[#c4d6cb]/15" />
+    <button type="submit" disabled={busy || !password} className="mt-4 h-12 w-full rounded-xl bg-[#d5e2d9] text-sm font-medium text-[#121714] transition-colors hover:bg-white disabled:cursor-wait disabled:opacity-60">{busy ? "Signing in…" : "Enter Portfolio"}</button>
+    {message && <p role="alert" className="mt-4 text-sm leading-6 text-rose-200/80">{message}</p>}
   </form>;
 }

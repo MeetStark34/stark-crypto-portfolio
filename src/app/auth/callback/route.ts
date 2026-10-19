@@ -9,9 +9,7 @@ export async function GET(request: NextRequest) {
   const next = resolvedNext.origin === request.nextUrl.origin
     ? `${resolvedNext.pathname}${resolvedNext.search}${resolvedNext.hash}`
     : "/dashboard";
-  if (!code || !isSupabaseConfigured) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  if (!code || !isSupabaseConfigured) return NextResponse.redirect(new URL("/login", request.url));
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);

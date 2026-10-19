@@ -12,5 +12,5 @@ export default async function PrivateLayout({ children }: Readonly<{ children: R
   const { data: settings } = await supabase.from("portfolio_settings").select("display_currency").eq("user_id", user.id).maybeSingle();
   const savedCurrency = settings?.display_currency;
   const displayCurrency = typeof savedCurrency === "string" && ["EUR", "USD", "INR"].includes(savedCurrency) ? savedCurrency : "EUR";
-  return <AppShell email={user.email ?? ""} displayCurrency={displayCurrency}>{children}</AppShell>;
+  return <AppShell displayCurrency={displayCurrency}>{children}</AppShell>;
 }

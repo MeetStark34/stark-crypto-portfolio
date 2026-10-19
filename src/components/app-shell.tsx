@@ -17,7 +17,7 @@ const links = [
 ];
 const mobilePrimary = ["/dashboard", "/portfolio", "/analytics", "/activity"];
 
-export function AppShell({ children, email, displayCurrency }: { children: ReactNode; email: string; displayCurrency: string }) {
+export function AppShell({ children, displayCurrency }: { children: ReactNode; displayCurrency: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -25,7 +25,7 @@ export function AppShell({ children, email, displayCurrency }: { children: React
   const [currencyError, setCurrencyError] = useState<string | null>(null);
   const [savingCurrency, startSavingCurrency] = useTransition();
   const title = links.find(({ href }) => pathname.startsWith(href))?.label ?? "Dashboard";
-  const initial = email?.trim().charAt(0).toUpperCase() || "M";
+  const initial = "M";
 
   return <div className="min-h-screen bg-[#090b0d] text-[#f1f3f1]">
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-[248px] flex-col border-r border-white/[0.075] bg-[#0c0f10] px-5 py-6 lg:flex">
