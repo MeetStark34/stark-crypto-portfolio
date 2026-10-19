@@ -1,66 +1,263 @@
-﻿# STARK CRYPTO PORTFOLIO
+> 🪙 Your crypto portfolio, reimagined. One private dashboard for your holdings, performance, and plans.
+> 
 
-A private crypto portfolio tracker with Supabase authentication and user-owned records, CoinGecko market data, and EUR/USD/INR reporting.
+# ✨ STARK CRYPTO PORTFOLIO
 
-## Run locally
+**A personal crypto portfolio tracker with a premium fintech feel.** Track the crypto you own, record purchases manually, and view your portfolio with live market prices - without connecting your Revolut account or placing trades.
 
-1. Install Node.js 20.9+ and run `npm ci`.
-2. Copy `.env.example` to `.env.local` and set the required variables listed below.
-3. Apply the SQL migration files in `supabase/migrations/` in timestamp order to your Supabase project.
-4. Run `npm run dev` and open http://localhost:3000.
+🔗 **Repository:** MeetStark34/stark-crypto-portfolio
 
-### Required environment variables
+## 🌌 The idea
 
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<Supabase publishable key>
-COINGECKO_API_KEY=<CoinGecko Demo API key>
-STARK_PORTFOLIO_PASSWORD=<private portfolio password>
-STARK_PORTFOLIO_AUTH_EMAIL=<email of the existing Supabase Auth user>
-SUPABASE_SERVICE_ROLE_KEY=<Supabase service-role key>
+STARK is built around one simple idea: **your portfolio should be easy to understand, not just a wall of market numbers.**
+
+It brings manually recorded purchases and market data into one private, responsive dashboard. The interface aims for a calm, polished, Apple-inspired fintech aesthetic, with the useful detail you need without unnecessary noise.
+
+- 🧾 Record crypto purchases and fees manually.
+- 📈 Follow portfolio value and performance using market data.
+- 🧮 Understand cost basis, average purchase price, and profit or loss.
+- 🥧 See allocation across your crypto holdings.
+- 💱 Switch between EUR, USD, and INR using exchange-rate conversion.
+- 🎯 Set personal portfolio targets and price alerts.
+- 📱 Use the dashboard on desktop or mobile.
+
+## 🚀 Features
+
+### 💼 Portfolio overview
+
+- Total portfolio value and invested amount
+- Current profit/loss and return percentage
+- Asset holdings and allocation percentages
+- Best- and worst-performing holdings
+- Portfolio performance charts, where historical data is available
+
+### 🪙 Asset details
+
+- Individual crypto holding details
+- Purchase and transaction history
+- Quantity held and average purchase price
+- Cost basis, fees, and performance breakdown
+
+### 🧾 Manual transaction tracking
+
+Enter the details of purchases you made elsewhere. STARK does **not** connect to Revolut, request Revolut credentials, or execute trades.
+
+### 📊 Analytics
+
+- Total invested and total fees
+- Average purchase price
+- Asset allocation
+- Best and worst performers
+- Monthly performance insights, with attention to deposits/capital flows versus market movement
+
+### 💱 Currency preferences
+
+Choose between:
+
+- 🇪🇺 EUR - Euro
+- 🇺🇸 USD - US Dollar
+- 🇮🇳 INR - Indian Rupee
+
+Currency selection is intended to convert values using exchange-rate data, not merely change the displayed symbol. Crypto quantities remain crypto quantities.
+
+### 🔔 Alerts and 🎯 targets
+
+Create price alerts and personal portfolio targets to help keep your plans visible. Availability and trigger behavior depend on the configured market-data and application services.
+
+### 🔐 Private by design
+
+- Password-only login experience
+- Supabase Auth sessions
+- PostgreSQL database with Row Level Security (RLS)
+- Server-side handling for sensitive credentials and market-data secrets
+
+## 🧰 Tech stack
+
+| Technology | Purpose |
+| --- | --- |
+| Next.js + React | Web application |
+| TypeScript | Type safety |
+| Tailwind CSS | Styling and responsive UI |
+| Supabase Auth | Authentication and sessions |
+| Supabase PostgreSQL | Portfolio storage |
+| Row Level Security (RLS) | User-data access controls |
+| CoinGecko API | Crypto market data |
+| Vercel | Hosting and deployment |
+
+## 🏗️ Architecture at a glance
+
+```
+Browser
+  │
+  ▼
+Next.js application
+  ├── Server-side authentication
+  ├── Portfolio calculations
+  ├── Market-data integration
+  └── Supabase server/client utilities
+           │
+           ▼
+    Supabase Auth + PostgreSQL
+           │
+           ▼
+       RLS-protected data
 ```
 
-The Supabase publishable key is designed for browser use and must be protected by Row Level Security. `COINGECKO_API_KEY`, `STARK_PORTFOLIO_PASSWORD`, `STARK_PORTFOLIO_AUTH_EMAIL`, and `SUPABASE_SERVICE_ROLE_KEY` are server-only. Never use a service-role key or private login values in a `NEXT_PUBLIC_` variable. `.env.local` is ignored by Git; do not commit real values.
+The frontend should never receive the Supabase service-role/secret key or other server-only credentials. User-specific data access should rely on the authenticated session and RLS policies.
 
-### Deploy to Vercel
+## 🖥️ Run locally
 
-Import the repository into Vercel and deploy it as a Next.js project. Add all six environment variables above in Vercel Project Settings → Environment Variables for each environment you use, then redeploy. Set `STARK_PORTFOLIO_PASSWORD` to the chosen login password, `STARK_PORTFOLIO_AUTH_EMAIL` to the email of the existing portfolio Auth user, and `SUPABASE_SERVICE_ROLE_KEY` to the project's server-only service-role key. The app verifies the password server-side, then uses the existing user to establish the standard Supabase cookie session. No database schema changes are required.
+### 1. Requirements
 
-The local Windows environment may fail `next build` when Windows Application Control blocks the SWC binary or a child process (`spawn EPERM`). This is a local Windows security restriction; it does not change the Vercel Linux build configuration.
+- Node.js (use a current LTS version)
+- npm
+- A Supabase project
+- A CoinGecko API key if required by your configured plan/integration
 
-## Current architecture
+### 2. Clone the repository
 
-- Next.js App Router and strict TypeScript under `src/app`.
-- Tailwind CSS 4 for the dark, responsive visual foundation.
-- Supabase SSR clients are split by runtime: `src/lib/supabase/client.ts` for browser code and `server.ts` for Server Components/Route Handlers.
-- `src/middleware.ts` refreshes Supabase auth cookies, redirects signed-out visitors from private routes, and routes signed-in visitors away from the landing/login pages.
-- The `(private)` route group performs a second server-side `auth.getUser()` check before rendering the app shell. Logout uses a server action calling Supabase `auth.signOut()`.
-- Login checks `STARK_PORTFOLIO_PASSWORD` on the server and establishes a normal Supabase SSR cookie session for the existing Auth user. The internal email and service-role key stay server-side.
-- `src/lib/env.ts` centralizes required public Supabase configuration and fails clearly when a client is actually requested without it.
-- No service-role client exists. Transaction writes use the signed-in Supabase session and RLS. CoinGecko is called server-side only; its API key is never returned to the browser.
-- `src/lib/coingecko.ts` is the server-only market-data layer: current single/multiple prices use `/simple/price`, market summaries use `/coins/markets`, and historical series use `/coins/{id}/market_chart`. Requests use the API key header and Next.js server fetch revalidation; authenticated route handlers return private, no-store responses.
-- `src/lib/market-data.ts` stores the last valid quote per user, asset, and fiat in `portfolio_market_cache`. It falls back to that snapshot when CoinGecko fails and marks it stale; missing quotes remain unavailable.
-- `src/lib/portfolio-calculations.mjs` is the shared fixed-point calculation engine. It uses 18-decimal `BigInt` units. Historical FX rates convert purchase amounts for the selected reporting currency. Total invested includes transaction fees once; purchase value excludes them. If any held asset lacks a valid quote, it withholds portfolio value, P/L, and allocations instead of presenting a partial total.
-- The main dashboard uses CoinGecko historical prices with purchase timestamps to value the holdings actually owned at each point. Its authenticated `/api/portfolio-performance` endpoint supports 1D, 1W, 1M, 3M, 1Y, and ALL; chart requests use cached CoinGecko history and return a clear unavailable state when prices cannot cover all holdings. Asset marks come from CoinGecko market data.
+```bash
+git clone https://github.com/MeetStark34/stark-crypto-portfolio.git
+cd stark-crypto-portfolio
+```
 
-## Portfolio transactions
+### 3. Install dependencies
 
-The migration creates separate `portfolio_assets` and `portfolio_transactions` tables instead of assuming the column layout of the project's pre-existing tables. The supported asset catalog is BTC, ETH, SOL, XRP, ADA, DOGE, DOT, AVAX, LINK, and MATIC. Each transaction row has a required `user_id` referencing `auth.users`; RLS permits authenticated users to read and mutate only their own rows. Portfolio asset rows are readable to authenticated users, while writes are restricted to the migration.
+```bash
+npm install
+```
 
-`total_fiat_amount` is total cash outflow including fees. `fee_fiat_amount` is a component of that total, and generated `purchase_value_fiat` equals `total_fiat_amount - fee_fiat_amount`. For a €10 charge with a €1.49 fee, total cost basis is €10, purchase value excluding fees is €8.51, and the fee is €1.49. The fee is not added a second time. Transaction inputs accept up to 30 integer digits and 18 fractional digits; amount strings go to PostgreSQL `numeric` without JavaScript floating-point conversion. Reads cast numeric columns to text to preserve their decimal precision through PostgREST. Purchase price per coin is derived from purchase value divided by crypto amount and rounded only for display.
+### 4. Configure environment variables
 
-The portfolio and dashboard show invested cost, fees, market value, unrealized P/L and return, per-asset holdings, average purchase prices, prices, allocations, and best/worst performance. P/L uses current value minus total cash outflow (including each fee once), translated into the selected reporting currency. Historical market prices power the portfolio and asset charts. If CoinGecko has no valid quote and no user-scoped cached quote exists, the UI shows an unavailable state rather than a substitute price.
+Create a local file named `.env.local` in the project root. Start with the variable names below and supply your own values.
 
-Run exact-decimal, portfolio calculation, historical performance, and validation tests with `npm run test:unit`. The database ownership/CRUD policy tests are in `supabase/tests/portfolio_transactions_rls.test.sql` and can be run against a local Supabase stack with `supabase test db`.
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+COINGECKO_API_KEY=
 
-## Database inspection and assumptions
+STARK_PORTFOLIO_PASSWORD=
+STARK_PORTFOLIO_AUTH_EMAIL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-The live definitions of the supplied tables (`profiles`, `crypto_assets`, `transactions`, `portfolio_settings`, `portfolio_targets`, and `price_alerts`) were not available in this workspace. The migrations use dedicated `portfolio_assets`, `portfolio_transactions`, and `portfolio_market_cache` tables so they do not assume or alter the unknown shape of those existing tables.
+**Keep `.env.local` private.** It must not be committed to Git. The `.env.example` file should contain placeholders only.
 
-All application data reads and writes are scoped to the authenticated user and protected by RLS. Supabase Auth callback URLs should include the local origin (`http://localhost:3000/auth/callback`) and the deployed origin when configured.
+| Variable | Purpose | Exposure |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Public configuration |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key | Client-safe key |
+| `COINGECKO_API_KEY` | Market-data API access, if configured | Server-only |
+| `STARK_PORTFOLIO_PASSWORD` | Password for the private login screen | Server-only secret |
+| `STARK_PORTFOLIO_AUTH_EMAIL` | Existing Supabase Auth identity used internally | Server-only |
+| `SUPABASE_SERVICE_ROLE_KEY` | Privileged server-side Supabase operations, if required by the auth flow | Highly sensitive server-only secret |
 
-The login uses Supabase Auth's existing email identity internally. The user only enters the private portfolio password; the app does not send or display an email link.
+⚠️ Never prefix private variables with `NEXT_PUBLIC_`. Never commit passwords, service-role/secret keys, or real API secrets. Never share them in screenshots or issue reports.
 
-## Product boundaries
+### 5. Apply database migrations
 
-This is a portfolio tracker: users enter purchases manually and market pricing comes from CoinGecko. It has no Revolut integration or login, crypto news, or trade execution. Portfolio values come from the signed-in user's Supabase rows and live market data; empty states do not include fabricated holdings.
+Review the SQL files in `supabase/migrations/` and apply the migrations required by the version of the application you are running to your Supabase project. Apply them in timestamp order and check the result before testing the app.
+
+> 💡 The deployed app and local development use the same Supabase project unless you configure separate projects. Be sure you know which database you are changing before applying migrations.
+> 
+
+### 6. Start development
+
+```bash
+npm run dev
+```
+
+Open http://localhost:3000.
+
+### 7. Type-check
+
+```bash
+npm run typecheck
+```
+
+Use any additional lint, test, or build scripts defined in `package.json`. A passing type-check is useful, but does not replace browser testing or a production build.
+
+## ☁️ Deploy to Vercel
+
+### 1. Import the GitHub repository
+
+1. Open Vercel.
+2. Choose **Add New → Project**.
+3. Import `MeetStark34/stark-crypto-portfolio`.
+4. Keep the framework preset as **Next.js** unless the project configuration says otherwise.
+
+### 2. Add Environment Variables
+
+In **Vercel → Project → Settings → Environment Variables**, configure the same variables listed in the local setup section.
+
+Add production secrets directly in Vercel. Do not paste secret values into GitHub, README files, or source code.
+
+### 3. Deploy and verify
+
+Click **Deploy**. After deployment, check:
+
+- 🔐 Password login accepts the configured password and rejects an incorrect one.
+- 🍪 The authenticated session survives a page refresh.
+- 🧭 Private pages remain protected when logged out.
+- 🪙 Holdings and transaction history load.
+- 💱 EUR, USD, and INR switch correctly.
+- 📈 Market prices and charts handle loading and API failures gracefully.
+- 🔔 Alerts, targets, and settings behave as expected.
+
+After pushing a new commit to the connected GitHub branch, Vercel should automatically create a deployment.
+
+## 🧮 Portfolio calculation principles
+
+Financial tracking only works when costs are represented consistently.
+
+- **Cash outflow** is the total amount charged for a purchase, including fees when the entered amount is fee-inclusive.
+- **Crypto purchase value** is the amount allocated to the asset, excluding the fee.
+- **Fee-inclusive cost basis** includes the full cash outflow.
+- **Profit/loss** compares current holding value with the chosen cost-basis definition.
+- **Precision** should be preserved in stored values and calculations; rounding belongs in the UI.
+
+When recording a transaction, make sure the entered amount and fee follow the form's labels. Do not count fees twice. Historic chart performance should not be fabricated when reliable historical data is unavailable.
+
+## 🛡️ Security notes
+
+- Keep `.env.local` out of version control.
+- Keep Supabase service-role/secret keys on the server only.
+- Never put secrets inside React client components or `NEXT_PUBLIC_*` variables.
+- Keep RLS enabled on tables containing private portfolio data.
+- Derive the user identity from the authenticated session, rather than trusting a user ID supplied by the browser.
+- Use a strong, unique password and change it if it has been exposed.
+- Treat a single shared password as a convenience layer, not as a replacement for a multi-user identity model.
+- Do not store the password in localStorage or log submitted passwords.
+
+## 🗺️ Roadmap
+
+The current focus is portfolio visibility and manual tracking. Possible future features:
+
+- 🧾 Import transaction history from a CSV export
+- 📉 Realised profit/loss and sell transactions
+- 🧮 Tax-oriented reports
+- 🎁 Staking and rewards tracking
+- 📤 Portfolio export and backup
+- 🔎 More detailed analytics
+
+These are ideas, not a promise that they are already implemented. STARK is not intended to place trades or provide investment advice.
+
+## 🤝 Contributing
+
+This project is currently designed as a personal portfolio. Suggestions and bug reports are welcome through GitHub Issues.
+
+When reporting an issue, include the relevant error message and steps to reproduce it. **Remove passwords, access tokens, API keys, private email addresses, and financial data before sharing logs or screenshots.**
+
+## ⚠️ Disclaimer
+
+STARK is a personal tracking and informational tool, not a bank, broker, exchange, tax adviser, or financial adviser. Market data may be delayed, unavailable, or subject to provider limits. Portfolio calculations depend on the accuracy of manually entered transaction details. Nothing in this project is a recommendation to buy or sell cryptocurrency.
+
+---
+
+<div align="center">
+
+**Built for clarity. Designed for your portfolio.** 🖤
+
+*STARK CRYPTO PORTFOLIO*
+
+</div>
